@@ -1,0 +1,45 @@
+use Chaco;
+
+use Digest::MD5 qw/md5_hex/;
+
+my $store = {};
+
+get '/' => sub {
+	tmpl 'index.tx';
+};
+
+get '/:key' => sub {
+	my $content = $store->{param->get('key')};
+	return r404 unless (defined $content);
+	text \$content;
+};
+
+post '/' => sub {
+	my $key = md5_hex param->get('content');
+	$store->{$key} = param->get('content');
+	redirect "/$key";
+};
+
+run;
+
+__DATA__
+
+@@ index.tx
+<!doctype html>
+<html>
+<head>
+	<meta charst="utf-8">
+	<title>nopaste</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style type="text/css">
+		#title { width: 400px; }
+		#content { width: 400px; height: 400px; }
+	</style>
+</head>
+<body>
+	<form action="/" method="post">
+		<textarea id="content" name="content"></textarea><br />
+		<input type="submit">
+	</form>
+</body>
+</html>
