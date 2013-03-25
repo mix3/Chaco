@@ -247,6 +247,8 @@ Chaco
 
 =head2 param
 
+=head2 param_raw
+
 =head2 run
 
 =head1 SEE ALSO

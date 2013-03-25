@@ -59,6 +59,8 @@ my $app = do {
 
 	post '/ja_body' => sub { text \q{<: $param :>}, { param => param('body')->get('param') } };
 
+	get '/ja_args/:param' => sub { text \q{<: $param :>}, { param => param('args')->get('param') } };
+
 	run;
 };
 
@@ -176,6 +178,12 @@ test_psgi $app, sub {
 		is $res->code, 200;
 		is $res->header('Content-Type'), 'text/plain';
 		is $res->content, 'こんにちは3';
+	};
+	do {
+		my $res = $cb->(GET '/ja_args/こんにちは4');
+		is $res->code, 200;
+		is $res->header('Content-Type'), 'text/plain';
+		is $res->content, 'こんにちは4';
 	};
 };
 
