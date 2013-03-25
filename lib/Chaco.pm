@@ -5,7 +5,9 @@ use Plack::Request;
 use Text::Xslate;
 use Data::Section::Simple;
 use JSON::XS;
+use Encode;
 use parent 'Exporter';
+use utf8;
 
 our @EXPORT = qw/
 	req
@@ -21,6 +23,7 @@ our @EXPORT = qw/
 	forward
 	uri_for
 	param
+	param_raw
 	run
 /;
 
@@ -82,6 +85,7 @@ sub tmpl {
 	} else {
 		$render = $tmpl->render($path, @_);
 	}
+	$render = encode_utf8 $render;
 	$res->header(['Content-Length' => length $render ]);
 	$res->content_type('text/html');
 	$res->body($render);
@@ -100,16 +104,19 @@ sub text {
 	} else {
 		$render = $tmpl->render($path, @_);
 	}
+	$render = encode_utf8 $render;
 	$res->header(['Content-Length' => length $render ]);
 	$res->content_type('text/plain');
 	$res->body($render);
 }
 sub view_opt { (%view_opt) = @_ }
 sub r404 {
+	my $error = shift;
 	$res->status(404);
 	$res->body('Not Found');
 }
 sub r500 {
+	my $error = shift;
 	$res->status(500);
 	$res->body('Internal Server Error');
 }
@@ -119,26 +126,45 @@ sub stash { $stash }
 sub param {
 	my $source = shift;
 	unless ($source) {
-		unless ($req_param->{all}) {
-			$req_param->{all} = Hash::MultiValue->new(
-				$req->query_parameters->flatten,
-				$req->body_parameters->flatten,
-				%args,
-			);
-		}
-		$req_param->{all};
+		$req_param->{merged} ||= _decode_param(param_raw($source));
 	} elsif ($source eq 'query') {
-		$req->query_parameters;
+		$req_param->{query} ||= _decode_param(param_raw($source));
 	} elsif ($source eq 'body') {
-		$req->body_parameters;
+		$req_param->{body} ||= _decode_param(param_raw($source));
 	} elsif ($source eq 'args') {
-		unless ($req_param->{args}) {
-			$req_param->{args} = Hash::MultiValue->new(%args);
-		}
-		$req_param->{args};
+		$req_param->{args} ||= _decode_param(param_raw($source));
 	} else {
 		die "unknown source: $source";
 	}
+}
+
+sub param_raw {
+	my $source = shift;
+	unless ($source) {
+		$req_param->{merged_raw} ||= Hash::MultiValue->new(
+			$req->query_parameters->flatten,
+			$req->body_parameters->flatten,
+			%args,
+		);
+	} elsif ($source eq 'query') {
+		$req_param->{query_raw} ||= $req->query_parameters;
+	} elsif ($source eq 'body') {
+		$req_param->{body_raw} ||= $req->body_parameters;
+	} elsif ($source eq 'args') {
+		$req_param->{args_raw} ||= Hash::MultiValue->new(%args);
+	} else {
+		die "unknown source: $source";
+	}
+}
+
+sub _decode_param {
+	my ($hmv) = @_;
+	my @flatten = $hmv->flatten();
+	my @decoded;
+	while (my ($k, $v) = splice @flatten, 0, 2) {
+		push @decoded, decode_utf8($k), decode_utf8($v);
+	}
+	return Hash::MultiValue->new(@decoded);
 }
 
 sub redirect { $res->redirect(@_) }

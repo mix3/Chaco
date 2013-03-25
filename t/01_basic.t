@@ -53,6 +53,12 @@ my $app = do {
 
 	get '/sprintf' => sub { text \q{<: sprintf("%d", $d) :>}, { d => 100 } };
 
+	get '/ja_tmpl' => sub { text 'ja.tx' };
+
+	get '/ja_query' => sub { text \q{<: $param :>}, { param => param('query')->get('param') } };
+
+	post '/ja_body' => sub { text \q{<: $param :>}, { param => param('body')->get('param') } };
+
 	run;
 };
 
@@ -153,6 +159,24 @@ test_psgi $app, sub {
 		is $res->code, 200;
 		is $res->content, '100';
 	};
+	do {
+		my $res = $cb->(GET '/ja_tmpl');
+		is $res->code, 200;
+		is $res->header('Content-Type'), 'text/plain';
+		is $res->content, "こんにちは1\n\n";
+	};
+	do {
+		my $res = $cb->(GET '/ja_query?param=こんにちは2');
+		is $res->code, 200;
+		is $res->header('Content-Type'), 'text/plain';
+		is $res->content, 'こんにちは2';
+	};
+	do {
+		my $res = $cb->(POST '/ja_body', [param => 'こんにちは3']);
+		is $res->code, 200;
+		is $res->header('Content-Type'), 'text/plain';
+		is $res->content, 'こんにちは3';
+	};
 };
 
 done_testing;
@@ -164,4 +188,7 @@ tmpl
 
 @@ text.tx
 text
+
+@@ ja.tx
+こんにちは1
 
