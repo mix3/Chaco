@@ -9,7 +9,7 @@ BEGIN { $ENV{'PLACK_ENV'} = 'development'; }
 my $app = do {
 	use Chaco;
 
-	view_opt cache => 0, function => { 'sprintf' => sub { sprintf shift, @_ } };
+	xslate_opt cache => 0;
 
 	get '/' => sub { text \q{top} };
 
@@ -50,8 +50,6 @@ my $app = do {
 	};
 
 	get '/internal_server_error' => sub { r500 };
-
-	get '/sprintf' => sub { text \q{<: sprintf("%d", $d) :>}, { d => 100 } };
 
 	get '/ja_tmpl' => sub { text 'ja.tx' };
 
@@ -155,11 +153,6 @@ test_psgi $app, sub {
 		my $res = $cb->(GET '/internal_server_error');
 		is $res->code, 500;
 		is $res->content, 'Internal Server Error';
-	};
-	do {
-		my $res = $cb->(GET '/sprintf');
-		is $res->code, 200;
-		is $res->content, '100';
 	};
 	do {
 		my $res = $cb->(GET '/ja_tmpl');

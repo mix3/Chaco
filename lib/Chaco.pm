@@ -1,13 +1,17 @@
 package Chaco;
 
+use strict;
+use warnings;
+use utf8;
+
 use Router::Simple::Sinatraish;
 use Plack::Request;
 use Text::Xslate;
 use Data::Section::Simple;
 use JSON::XS;
 use Encode;
+
 use parent 'Exporter';
-use utf8;
 
 our @EXPORT = qw/
 	req
@@ -17,7 +21,7 @@ our @EXPORT = qw/
 	text
 	r404
 	r500
-	view_opt
+	xslate_opt
 	stash
 	redirect
 	forward
@@ -27,7 +31,7 @@ our @EXPORT = qw/
 	run
 /;
 
-my $req, $res, $tmpl, $ds, %args, $tmpl, %view_opt, $req_param, $class, $stash;
+my ($req, $res, $ds, %args, $tmpl, %xslate_opt, $req_param, $class, $stash);
 
 sub import {
 	my $class = shift;
@@ -42,8 +46,8 @@ sub run {
 	($class) = caller(0);
 
 	$tmpl = Text::Xslate->new(
-		%view_opt,
 		path => [ Data::Section::Simple->new($class)->get_data_section() ],
+		%xslate_opt,
 	);
 
 	my $app = sub {
@@ -109,7 +113,7 @@ sub text {
 	$res->content_type('text/plain');
 	$res->body($render);
 }
-sub view_opt { (%view_opt) = @_ }
+sub xslate_opt { (%xslate_opt) = @_ }
 sub r404 {
 	my $error = shift;
 	$res->status(404);
@@ -237,7 +241,7 @@ Chaco
 
 =head2 r500
 
-=head2 view_opt
+=head2 xslate_opt
 
 =head2 redirect
 
