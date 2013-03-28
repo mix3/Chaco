@@ -117,12 +117,12 @@ sub xslate_opt { (%xslate_opt) = @_ }
 sub r404 {
 	my $error = shift;
 	$res->status(404);
-	$res->body('Not Found');
+	$res->body($error || 'Not Found');
 }
 sub r500 {
 	my $error = shift;
 	$res->status(500);
-	$res->body('Internal Server Error');
+	$res->body($error || 'Internal Server Error');
 }
 
 sub stash { $stash }
