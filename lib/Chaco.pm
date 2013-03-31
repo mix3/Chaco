@@ -10,6 +10,7 @@ use Text::Xslate;
 use Data::Section::Simple;
 use JSON::XS;
 use Encode;
+use Carp;
 
 use parent 'Exporter';
 
@@ -138,7 +139,7 @@ sub param {
 	} elsif ($source eq 'args') {
 		$req_param->{args} ||= _decode_param(param_raw($source));
 	} else {
-		die "unknown source: $source";
+		croak "unknown source: $source";
 	}
 }
 
@@ -157,7 +158,7 @@ sub param_raw {
 	} elsif ($source eq 'args') {
 		$req_param->{args_raw} ||= Hash::MultiValue->new(%args);
 	} else {
-		die "unknown source: $source";
+		croak "unknown source: $source";
 	}
 }
 

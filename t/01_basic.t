@@ -59,6 +59,8 @@ my $app = do {
 
 	get '/ja_args/:param' => sub { text \q{<: $param :>}, { param => param('args')->get('param') } };
 
+	get '/unknown_source' => sub { param('unknown_source') };
+
 	run;
 };
 
@@ -177,6 +179,10 @@ test_psgi $app, sub {
 		is $res->code, 200;
 		is $res->header('Content-Type'), 'text/plain';
 		is $res->content, 'こんにちは4';
+	};
+	do {
+		my $res = $cb->(GET '/unknown_source');
+		is $res->code, 500;
 	};
 };
 
